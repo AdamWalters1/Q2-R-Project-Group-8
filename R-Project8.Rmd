@@ -9,13 +9,22 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r, warning  = FALSE}
+library(rio)
+library(readxl)
+library(openxlsx)
+library(tm)
+library(wordcloud)
+library(SnowballC)
+library(RColorBrewer)
 library(tidyverse)
-
+library(MASS)
 ```
 
 ```{r}
 df <- read_csv("data/ChatGPT_ResponsesOnAI.csv")
+
+df[3,3]
 ```
 
 
