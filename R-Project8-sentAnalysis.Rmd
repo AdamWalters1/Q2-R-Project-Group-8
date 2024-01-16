@@ -1,0 +1,180 @@
+---
+title: "SentimentAnalysis"
+author: "Adam Walters"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning  = FALSE}
+library(rio)
+library(readxl)
+library(openxlsx)
+library(tm)
+library(wordcloud)
+library(SnowballC)
+library(RColorBrewer)
+library(tidyverse)
+library(MASS)
+library(qdap)
+```
+
+```{r}
+df <- read_csv("ChatGPT_ResponsesOnAI.csv")
+
+```
+
+```{r}
+corpG <- Corpus(VectorSource(df$Response))
+
+```
+
+```{r}
+# Function to remove unknown characters
+remove_unknown_characters <- function(text) {
+  encoding <- "UTF-8"
+  clean_text <- iconv(text, to = encoding, sub = "")
+  return(clean_text)
+}
+
+# Apply the function to each document in the corpus
+corpG <- tm_map(corpG, content_transformer(remove_unknown_characters))
+```
+
+```{r, warning = FALSE}
+corpG <- tm_map(corpG,content_transformer(tolower))
+corpG <- tm_map(corpG,removeNumbers)
+corpG <- tm_map(corpG,removeWords,stopwords("english"))
+corpG <- tm_map(corpG,removePunctuation)
+corpG <- tm_map(corpG, stripWhitespace)
+```
+
+```{r, warning = FALSE}
+corpG <- tm_map(corpG,removeWords, c("Ai", "AI", "ai"))
+corpG <- tm_map(corpG,stemDocument)
+```
+
+```{r, warning = FALSE}
+# A polarity data frame with negators, amplifiers, deamplifiers, and a window of 2 words
+p2 <- polarity(corpG, group = df$Number,
+               polarity.frame=key.pol,negators = negation.words,
+               amplifiers = amplification.words,
+               deamplifiers = deamplification.words,
+               n.before = 2, n.after = 2)
+
+
+```
+
+6.
+```{r}
+p2$all$polarity[is.nan(p2$all$polarity)]<-0
+```
+
+
+
+```{r}
+#boxplot(df$p2~df$Perspective)
+```
+
+
+5.
+```{r}
+plot(p2$Polar, p2$,
+     pch = 16,
+     xlab = "Polarity of strengths 0",
+     ylab = "Polarity of gains 0")
+```
+
+6.
+```{r}
+colInd<-which(names(dat) %in% c("polarStr2","polarGains2"))
+polSc<- scale(dat[,colInd])
+km4 <- kmeans(polSc,4,nstart=20)
+
+set.seed(999)
+plot(dat$polarStr2,dat$polarGains2,col=km4$cluster, pch = 16,
+     xlab = "Polarity strength 0",
+     ylab = "Polarity gains 0")
+legend("topright",legend=as.character(1:4),col=1:4,pch = 16)
+```
+
+7.
+```{r}
+dat$polCluster <- km4$cluster
+```
+
+9. and 10.
+```{r}
+aggregate(dat$statisticsLove, by=list(dat$polCluster), FUN = mean)
+boxplot(dat$statisticsLove ~ dat$polCluster,
+        xlab = "Polarity cluster",
+          ylab = "Stats love")
+```
+
+11.
+```{r}
+aggregate(dat$petLove, by=list(dat$polCluster), FUN = mean)
+```
+
+12.
+```{r}
+corpS <- Corpus(VectorSource(dat$strengths))
+```
+
+```{r, warning = FALSE}
+corpS <- tm_map(corpS,content_transformer(tolower))
+corpS <- tm_map(corpS,removeNumbers)
+corpS <- tm_map(corpS,removeWords,stopwords("english"))
+corpS <- tm_map(corpS,removePunctuation)
+corpS <- tm_map(corpS, stripWhitespace)
+tdS <- TermDocumentMatrix(corpS)
+tdSM <- as.matrix(tdS)
+
+dim(tdSM)
+
+```
+
+```{r}
+tdSMt <- t(tdSM)
+dim(tdSMt)
+
+tdSD <- as.data.frame(tdSMt)
+```
+
+14.
+```{r}
+datText<-cbind(dat,tdSD)
+dim(datText)
+```
+
+16. - 19.
+```{r}
+cls1<-datText[datText$polCluster==1,]
+cls2<-datText[datText$polCluster==2,]
+cls3<-datText[datText$polCluster==3,]
+cls4<-datText[datText$polCluster==4,]
+
+termS1<-sort(colSums(cls1[,-c(1:49)]),decreasing=TRUE)
+termS1 <- data.frame(word = names(termS1),freq=termS1)
+
+termS2<-sort(colSums(cls2[,-c(1:49)]),decreasing=TRUE)
+termS2 <- data.frame(word = names(termS2),freq=termS2)
+
+termS3<-sort(colSums(cls3[,-c(1:49)]),decreasing=TRUE)
+termS3 <- data.frame(word = names(termS3),freq=termS3)
+
+termS4<-sort(colSums(cls4[,-c(1:49)]),decreasing=TRUE)
+termS4 <- data.frame(word = names(termS4),freq=termS4)
+
+wordcloud(termS1$word,termS1$freq,scale=c(2,.5),min.freq=2)
+
+wordcloud(termS2$word,termS2$freq,scale=c(2,.5),min.freq=2)
+
+wordcloud(termS3$word,termS3$freq,scale=c(2,.5),min.freq=2)
+
+wordcloud(termS4$word,termS4$freq,scale=c(2,.5),min.freq=2)
+```
+
