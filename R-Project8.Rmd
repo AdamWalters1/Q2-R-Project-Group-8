@@ -1,6 +1,6 @@
 ---
 title: "Q2-R-Project-Group-8"
-author: "Henry Fong"
+author: "Henry Fong, Ian Zhang, Adam Walters"
 date: "`r Sys.Date()`"
 output: html_document
 ---
@@ -10,8 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-library(tidyverse)
-
+#library(tidyverse)
+library(tm)
 ```
 
 ```{r}
