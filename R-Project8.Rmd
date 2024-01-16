@@ -1,5 +1,5 @@
 ---
-title: "Q2-R-Project-Group-8"
+title: "Q2-R-Project-Group-8, TFIDF"
 author: "Henry Fong, Ian Zhang, Adam Walters"
 date: "`r Sys.Date()`"
 output: html_document
@@ -34,7 +34,6 @@ corpG <- Corpus(VectorSource(df$Response))
 ```
 
 ```{r}
-
 # Function to remove unknown characters
 remove_unknown_characters <- function(text) {
   encoding <- "UTF-8"
@@ -44,8 +43,6 @@ remove_unknown_characters <- function(text) {
 
 # Apply the function to each document in the corpus
 corpG <- tm_map(corpG, content_transformer(remove_unknown_characters))
-
-
 ```
 
 ```{r, warning = FALSE}
@@ -55,24 +52,15 @@ corpG <- tm_map(corpG,removeWords,stopwords("english"))
 corpG <- tm_map(corpG,removePunctuation)
 corpG <- tm_map(corpG, stripWhitespace)
 ```
-4. and 5.
-```{r, warning = FALSE}
-corpG <- tm_map(corpG,removeWords, c("Ai", "AI", ))
-corpG <- tm_map(corpG,stemDocument)
 
-inspect(corpG[1:4])
+```{r, warning = FALSE}
+corpG <- tm_map(corpG,removeWords, c("Ai", "AI", "ai"))
+corpG <- tm_map(corpG,stemDocument)
 ```
-6. and 7.
+
 ```{r}
 tdG <- TermDocumentMatrix(corpG)
-inspect(tdG)
-
-class(tdG)
-
 tdGM <- as.matrix(tdG)
-class(tdGM)
-
-tdGM[1:8,1:4]
 ```
 
 8.
@@ -85,17 +73,14 @@ head(termG2)
 
 
 # Part 2
-1.
 ```{r}
 plot(termG2$freq,xlab = "word index", ylab = "Frequency")
 ```
 
-2.
 ```{r}
 wordcloud(termG2$word,termG2$freq,scale = c(2,0.5))
 ```
 
-3.
 ```{r}
 numTermsGte2 <- sum(termG2$freq > 1)
 cols <- rainbow(numTermsGte2)
@@ -104,8 +89,6 @@ plot(termG2$freq[termG2$freq > 1], xlab = "Word index", ylab = "Frequency")
 wordcloud(termG2$word[termG2$freq >1], termG2$freq[termG2$freq > 1],scale = c(2,0.5), min.freq = 2, rot.per = .5,colors = cols, random.color = FALSE, ordered.colors = TRUE)
 ```
 
-
-6.
 ```{r}
 tdGM[1:4,1:6]
 tfidf <- TermDocumentMatrix(corpG, control = list(weighting = function(x) {weightTfIdf(x)}))
@@ -113,34 +96,25 @@ tfidf <- as.matrix(tfidf)
 tfidf[1:4,1:6]
 ```
 
-8.
 ```{r}
 tfV <- as.vector(tdGM)
 tfidfV <- as.vector(tfidf)
 plot(tfV,tfidfV,xlab = "TF", ylab = "TF-IDF")
 ```
 
-
-13.
 ```{r, warning = FALSE}
 tfidfByWords <-rowSums(tfidf)
 wordcloud(rownames(tfidf),tfidfByWords,scale = c(2,0.5))
 ```
 
-
-12. 
 ```{r}
 summary(tfidfByWords)
 ```
 
-
-
-14
 ```{r, warning = FALSE}
 wordcloud(rownames(tfidf),tfidfByWords,scale = c(2,0.5), min.freq = 0.75)
 ```
 
-16.
 ```{r}
 orderWords <- order(tfidfByWords, decreasing = TRUE)
 tfidfOrder <- tfidf[orderWords,]
@@ -149,7 +123,6 @@ rownames(tfidfOrder)[1:10]
 
 ```
 
-17.
 ```{r}
 tfidfTr <- t(tfidfOrder)
 boxplot(tfidfTr[,1:10],cex = 0.5)
