@@ -63,9 +63,54 @@ p2 <- polarity(corpG, group = df$Number,
 # Handle NaN values
 p2$all$polarity[is.nan(p2$all$polarity)] <- 0
 
-# K-means clustering
+
 ```
 
 ```{r}
+# Create a matrix for pairwise comparisons
+polarity_matrix <- matrix(NA, nrow = nrow(df), ncol = nrow(df))
+
+# Fill the matrix with pairwise sentiment scores
+for (i in 1:nrow(df)) {
+  for (j in 1:nrow(df)) {
+    # Skip self-comparison
+    if (i != j) {
+      polarity_matrix[i, j] <- p2$all$polarity[i] - p2$all$polarity[j]
+    }
+  }
+}
+
+# Convert the matrix to a data frame for easier analysis
+polarity_df <- as.data.frame(polarity_matrix)
+colnames(polarity_df) <- paste("Doc", 1:nrow(df), sep = "")
+
+# Display the polarity matrix
+print("Polarity Matrix:")
+print(polarity_df)
 
 ```
+
+```{r}
+# Install and load required library
+
+library(RColorBrewer)
+
+# Create a heatmap
+heatmap(polarity_matrix, 
+        col = colorRampPalette(c("red", "white", "green"))(100),
+        main = "Pairwise Sentiment Differences",
+        xlab = "Documents",
+        ylab = "Documents",
+        cex.lab = 1.5,
+        cex.axis = 1.5,
+        cex.main = 1.5,
+        margins = c(10, 10),
+        key.title = NA,
+        key.xlab = "Sentiment Difference",
+        key.ylab = NULL,
+        trace = "none"
+)
+
+```
+
+
