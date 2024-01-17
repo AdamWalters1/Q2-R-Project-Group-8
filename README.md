@@ -20,7 +20,9 @@ Data and Data Preparation:
 We are analyzing the data and see if words that are in the five essays all have a overall negative or positive tone.
 
 **Describe the steps you took to prepare the data for analysis**
-To make the data into a tfidf. We first imported the neccesarry libraries, after that we imported the data into a variable called df. We then made a variable called corpG using Corpus to get the responses. After we made corpG we then made a code that will clean the data of any words that is unknown, stopwords, numbers, whitespace, or any other words that will break the code. What we did next was made the corpG into a TermDocumentMatrix 
+
+**(tfidf portion)**
+To make the data into a tfidf. We first imported the neccesarry libraries, after that we imported the data into a variable called df. We then made a variable called corpG using Corpus to get the responses. After we made corpG we then made a code that will clean the data of any words that is unknown, stopwords, numbers, whitespace, or any other words that will break the code. What we did next was made the corpG into a TermDocumentMatrix called tdG 
 
 TF-IDF Analysis:
 
