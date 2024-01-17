@@ -76,7 +76,7 @@ p2$all$polarity[is.nan(p2$all$polarity)] <- 0
 ```
 
 ```{r}
-print(p2$all$wc)
+print(p2$all$polarity)
 
 ```
 
@@ -128,6 +128,32 @@ ggplot(polarity_df, aes(x = factor(Document), y = Polarity, fill = factor(Docume
        y = "Sentiment Score") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+```{r, warning = FALSE}
+
+# Separate positive and negative documents based on polarity
+positive_docs <- df$Response[p2$all$polarity > 0]
+negative_docs <- df$Response[p2$all$polarity < 0]
+
+# Calculate word frequencies for positive and negative documents
+positive_freq <- table(unlist(strsplit(positive_docs, " ")))
+negative_freq <- table(unlist(strsplit(negative_docs, " ")))
+
+# Ensure both frequencies have the same set of words
+all_words <- union(names(positive_freq), names(negative_freq))
+
+# Fill in missing words with 0 frequency
+positive_freq[setdiff(all_words, names(positive_freq))] <- 0
+negative_freq[setdiff(all_words, names(negative_freq))] <- 0
+
+# Combine frequencies, giving more weight to words that are more polarizing
+combined_freq <- positive_freq - negative_freq
+
+# Create a word cloud using combined frequencies
+wordcloud(words = names(combined_freq), freq = combined_freq,
+          scale = c(3, 0.5), min.freq = 1, colors = brewer.pal(8, "RdBu"))
 
 ```
 
