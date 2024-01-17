@@ -1,0 +1,156 @@
+---
+title: "Q2-R-Project-Group-8, TFIDF"
+author: "Henry Fong, Ian Zhang, Adam Walters"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning  = FALSE}
+library(rio)
+library(readxl)
+library(openxlsx)
+library(tm)
+library(wordcloud)
+library(SnowballC)
+library(RColorBrewer)
+library(tidyverse)
+library(MASS)
+
+```
+
+```{r}
+df <- read_csv("ChatGPT_ResponsesOnAI.csv")
+
+```
+
+```{r}
+corpG <- Corpus(VectorSource(df$Response))
+
+```
+
+```{r}
+# Function to remove unknown characters
+remove_unknown_characters <- function(text) {
+  encoding <- "UTF-8"
+  clean_text <- iconv(text, to = encoding, sub = "")
+  return(clean_text)
+}
+
+# Apply the function to each document in the corpus
+corpG <- tm_map(corpG, content_transformer(remove_unknown_characters))
+```
+
+```{r, warning = FALSE}
+corpG <- tm_map(corpG,content_transformer(tolower))
+corpG <- tm_map(corpG,removeNumbers)
+corpG <- tm_map(corpG,removeWords,stopwords("english"))
+corpG <- tm_map(corpG,removePunctuation)
+corpG <- tm_map(corpG, stripWhitespace)
+```
+
+```{r, warning = FALSE}
+corpG <- tm_map(corpG,removeWords, c("Ai", "AI", "ai"))
+corpG <- tm_map(corpG,stemDocument)
+View(corpG[])
+```
+
+```{r}
+tdG <- TermDocumentMatrix(corpG)
+tdGM <- as.matrix(tdG)
+```
+
+8.
+```{r}
+termG <- rowSums(tdGM)
+termG <- sort(termG, decreasing = TRUE)
+termG2 <- data.frame(word = names(termG),freq = termG)
+head(termG2)
+```
+
+
+# Part 2
+```{r}
+plot(termG2$freq,xlab = "word index", ylab = "Frequency")
+```
+
+```{r}
+wordcloud(termG2$word,termG2$freq,scale = c(2,0.5))
+```
+
+```{r}
+numTermsGte2 <- sum(termG2$freq > 1)
+cols <- rainbow(numTermsGte2)
+plot(termG2$freq[termG2$freq > 1], xlab = "Word index", ylab = "Frequency")
+
+wordcloud(termG2$word[termG2$freq >1], termG2$freq[termG2$freq > 1],scale = c(2,0.5), min.freq = 2, rot.per = .5,colors = cols, random.color = FALSE, ordered.colors = TRUE)
+```
+
+```{r}
+
+tdGM[1:4,1:6]
+tfidf <- TermDocumentMatrix(corpG, control = list(weighting = function(x) {weightTfIdf(x)}))
+tfidf <- as.matrix(tfidf)
+tfidf[1:4,1:6]
+```
+
+```{r}
+# plot tf values vs tfidf values
+tfV <- as.vector(tdGM)
+tfidfV <- as.vector(tfidf)
+plot(tfV,tfidfV,xlab = "TF", ylab = "TF-IDF")
+```
+
+```{r, warning = FALSE}
+# word cloud on tfidf values
+tfidfByWords <-rowSums(tfidf)
+wordcloud(rownames(tfidf),tfidfByWords,scale = c(2,0.5))
+```
+
+```{r}
+summary(tfidfByWords)
+```
+
+```{r, warning = FALSE}
+# word cloud based on TFIDF values, min freq
+wordcloud(rownames(tfidf),tfidfByWords,scale = c(2,0.5), min.freq = 0.75)
+```
+
+```{r}
+# orders words by TFIDF values
+orderWords <- order(tfidfByWords, decreasing = TRUE)
+tfidfOrder <- tfidf[orderWords,]
+rownames(tfidfOrder)[1:10]
+
+
+```
+
+```{r}
+# Create a boxplot of the top 10 TFIDF values
+tfidfTr <- t(tfidfOrder)
+boxplot(tfidfTr[,1:10],cex = 0.5)
+```
+
+```{r}
+dim(tfidfTr)
+# dimensions of the transposed matrix
+```
+
+```{r}
+studCodes = df$Number
+distdat <- dist(tfidfTr)
+# multidimensional scaling and scatter plot
+fit <- cmdscale(distdat, k = 2)
+plot(fit, pch = 16, xlab = "Coordinate 1 ", ylab = "Coordinate 2")
+text(fit +0.02, label = studCodes, cex = 0.7)
+
+```
+
+```{r}
+# Parallel coordinates plot
+cols <- rainbow(dim(tfidfTr)[[1]])
+parcoord(tfidfTr[,1:10],col = cols)
+```

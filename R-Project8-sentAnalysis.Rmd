@@ -29,8 +29,6 @@ df <- read_csv("ChatGPT_ResponsesOnAI.csv")
 
 ```{r}
 
-# Create a corpus
-corpG <- Corpus(VectorSource(df$Response))
 
 # Function to remove unknown characters
 remove_unknown_characters <- function(text) {
@@ -40,29 +38,45 @@ remove_unknown_characters <- function(text) {
 }
 
 # Apply the function to each document in the corpus
-corpG <- tm_map(corpG, content_transformer(remove_unknown_characters))
+# Function to remove unknown characters
+remove_unknown_characters <- function(text) {
+  encoding <- "UTF-8"
+  clean_text <- iconv(text, to = encoding, sub = "")
+  return(clean_text)
+}
 
-# Further text preprocessing
-corpG <- tm_map(corpG, content_transformer(tolower))
-corpG <- tm_map(corpG, removeNumbers)
-corpG <- tm_map(corpG, removeWords, stopwords("english"))
-corpG <- tm_map(corpG, removePunctuation)
-corpG <- tm_map(corpG, stripWhitespace)
-corpG <- tm_map(corpG, removeWords, c("ai"))
+# Apply the function to each element in the df$Response column
+df$Response <- sapply(df$Response, remove_unknown_characters)
 
-# Stemming
-corpG <- tm_map(corpG, stemDocument)
+# Further text preprocessing on df$Response
+df$Response <- tolower(df$Response)
+df$Response <- gsub("[0-9]", "", df$Response)  # remove numbers
+df$Response <- removeWords(df$Response, stopwords("english"))
+df$Response <- removePunctuation(df$Response)
+df$Response <- stripWhitespace(df$Response)
+df$Response <- removeWords(df$Response, c("ai"))
+df$Response <- stemDocument(df$Response)
 
+
+```
+
+
+
+```{r}
 # Sentiment analysis
-p2 <- polarity(corpG, group = df$Number,
+p2 <- polarity(df$Response, group = df$Number,
                polarity.frame = key.pol, negators = negation.words,
                amplifiers = amplification.words,
                deamplifiers = deamplification.words,
                n.before = 2, n.after = 2)
 
+
 # Handle NaN values
 p2$all$polarity[is.nan(p2$all$polarity)] <- 0
+```
 
+```{r}
+print(p2$all$wc)
 
 ```
 
@@ -90,27 +104,30 @@ print(polarity_df)
 
 ```
 
+
+
+
 ```{r}
-# Install and load required library
+# Assuming you have already calculated polarity scores using the polarity function
+# ...
 
-library(RColorBrewer)
+# Extract relevant information for plotting
+doc_numbers <- df$Number
+polarity_values <- p2$all$polarity
 
-# Create a heatmap
-heatmap(polarity_matrix, 
-        col = colorRampPalette(c("red", "white", "green"))(100),
-        main = "Pairwise Sentiment Differences",
-        xlab = "Documents",
-        ylab = "Documents",
-        cex.lab = 1.5,
-        cex.axis = 1.5,
-        cex.main = 1.5,
-        margins = c(10, 10),
-        key.title = NA,
-        key.xlab = "Sentiment Difference",
-        key.ylab = NULL,
-        trace = "none"
-)
+# Create a data frame for plotting
+polarity_df <- data.frame(Document = doc_numbers, Polarity = polarity_values)
+
+# Plotting the bar plot
+library(ggplot2)
+
+ggplot(polarity_df, aes(x = factor(Document), y = Polarity, fill = factor(Document))) +
+  geom_bar(stat = "identity", position = "dodge", width = 0.7) +
+  labs(title = "Sentiment Scores by Document",
+       x = "Document Number",
+       y = "Sentiment Score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
-
 
