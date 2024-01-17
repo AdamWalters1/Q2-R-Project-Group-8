@@ -19,13 +19,15 @@ library(SnowballC)
 library(RColorBrewer)
 library(tidyverse)
 library(MASS)
-
+library(qdap)
 ```
 
 ```{r}
 df <- read_csv("ChatGPT_ResponsesOnAI.csv")
 
 ```
+
+# TF-IDF !!!
 
 ```{r}
 corpG <- Corpus(VectorSource(df$Response))
@@ -55,7 +57,7 @@ corpG <- tm_map(corpG, stripWhitespace)
 ```{r, warning = FALSE}
 corpG <- tm_map(corpG,removeWords, c("Ai", "AI", "ai"))
 corpG <- tm_map(corpG,stemDocument)
-View(corpG[])
+
 ```
 
 ```{r}
@@ -63,16 +65,13 @@ tdG <- TermDocumentMatrix(corpG)
 tdGM <- as.matrix(tdG)
 ```
 
-8.
 ```{r}
 termG <- rowSums(tdGM)
 termG <- sort(termG, decreasing = TRUE)
 termG2 <- data.frame(word = names(termG),freq = termG)
-head(termG2)
+
 ```
 
-
-# Part 2
 ```{r}
 plot(termG2$freq,xlab = "word index", ylab = "Frequency")
 ```
@@ -153,4 +152,106 @@ text(fit +0.02, label = studCodes, cex = 0.7)
 # Parallel coordinates plot
 cols <- rainbow(dim(tfidfTr)[[1]])
 parcoord(tfidfTr[,1:10],col = cols)
+```
+
+# Sentiment Analysis !!!
+
+```{r}
+
+# Function to remove unknown characters
+remove_unknown_characters <- function(text) {
+  encoding <- "UTF-8"
+  clean_text <- iconv(text, to = encoding, sub = "")
+  return(clean_text)
+}
+
+# Apply the function to each document in the corpus
+# Function to remove unknown characters
+remove_unknown_characters <- function(text) {
+  encoding <- "UTF-8"
+  clean_text <- iconv(text, to = encoding, sub = "")
+  return(clean_text)
+}
+
+# Apply the function to each element in the df$Response column
+df$Response <- sapply(df$Response, remove_unknown_characters)
+
+# Further text preprocessing on df$Response
+df$Response <- tolower(df$Response)
+df$Response <- gsub("[0-9]", "", df$Response)  # remove numbers
+df$Response <- removeWords(df$Response, stopwords("english"))
+df$Response <- removePunctuation(df$Response)
+df$Response <- stripWhitespace(df$Response)
+df$Response <- removeWords(df$Response, c("ai"))
+df$Response <- stemDocument(df$Response)
+
+
+```
+
+
+
+```{r}
+# Sentiment analysis
+p2 <- polarity(df$Response, group = df$Number,
+               polarity.frame = key.pol, negators = negation.words,
+               amplifiers = amplification.words,
+               deamplifiers = deamplification.words,
+               n.before = 2, n.after = 2)
+
+
+# Handle NaN values
+p2$all$polarity[is.nan(p2$all$polarity)] <- 0
+```
+
+```{r}
+print(p2$all$polarity)
+
+```
+
+```{r}
+
+# Extract relevant information for plotting
+doc_numbers <- df$Number
+polarity_values <- p2$all$polarity
+
+# Create a data frame for plotting
+polarity_df <- data.frame(Document = doc_numbers, Polarity = polarity_values)
+
+# Plotting the bar plot
+library(ggplot2)
+
+ggplot(polarity_df, aes(x = factor(Document), y = Polarity, fill = factor(Document))) +
+  geom_bar(stat = "identity", position = "dodge", width = 0.7) +
+  labs(title = "Sentiment Scores by Document",
+       x = "Document Number",
+       y = "Sentiment Score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+```{r, warning = FALSE}
+
+# Separate positive and negative documents based on polarity
+positive_docs <- df$Response[p2$all$polarity > 0]
+negative_docs <- df$Response[p2$all$polarity < 0]
+
+# Calculate word frequencies for positive and negative documents
+positive_freq <- table(unlist(strsplit(positive_docs, " ")))
+negative_freq <- table(unlist(strsplit(negative_docs, " ")))
+
+# Ensure both frequencies have the same set of words
+all_words <- union(names(positive_freq), names(negative_freq))
+
+# Fill in missing words with 0 frequency
+positive_freq[setdiff(all_words, names(positive_freq))] <- 0
+negative_freq[setdiff(all_words, names(negative_freq))] <- 0
+
+# Combine frequencies, giving more weight to words that are more polarizing
+combined_freq <- positive_freq - negative_freq
+
+# Create a word cloud using combined frequencies
+wordcloud(words = names(combined_freq), freq = combined_freq,
+          scale = c(3, 0.5), min.freq = 1, colors = brewer.pal(8, "RdBu"))
+
 ```
