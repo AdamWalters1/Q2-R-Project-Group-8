@@ -22,7 +22,7 @@ Sentiment analysis was conducted on its responses to see if ChatGPT had any tend
 * **Describe the steps you took to prepare the data for analysis**
 
     * **(tfidf portion)**
-        * To make the data into a tfidf. We first imported the neccesarry libraries, after that we imported the data into a variable called df. We then made a variable called corpG using Corpus to get the responses. After we made corpG we then made a code that will clean the data of any words that is unknown, stopwords, numbers, whitespace, or any other words that will break the code. What we did next was made the corpG into a TermDocumentMatrix called tdG, we also used as.matrix(tdG) calling it tdGM. TdGM allows us to find out the frequencies that a words appear in the entire text. TdGM also allows us to 
+        * To make the data into a tfidf. We first imported the neccesarry libraries, after that we imported the data into a variable called df. We then made a variable called corpG using Corpus to get the responses. After we made corpG we then made a code that will clean the data of any words that is unknown, stopwords, numbers, whitespace, or any other words that will break the code. What we did next was made the corpG into a TermDocumentMatrix called tdG, we also used as.matrix(tdG) calling it tdGM. TdGM allows us to find out the frequencies that a words appear in the entire text. TdGM also allows us to to create tfidfV which is used to make the wordcloud, plots, and words that appear commonly in the entire text.
 
 ## TF-IDF Analysis:
 
