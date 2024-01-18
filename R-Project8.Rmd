@@ -24,18 +24,31 @@ library(qdap)
 
 ## Introduction
 
-We are analyzing text from chatgpt by giving it the prompt "Write a 300 word essay on the future of A.I." five times. There are some alterations on the prompt to help generate a difference in the essay, for example: "Write... on the future of A.I. in the perspective of a pessimist". We choose this text to see if chatgpt will have a negative or positive connotation with the future of A.I. 
-\n
+* **Describe the text you are analyzing and why you choose it:**<br>
+We are analyzing text from ChatGPT by giving it the prompt "Write a 300 word essay on the future of A.I." five times. There are some alterations on the prompt to help generate a difference in the essay, for example: "Write... on the future of A.I. in the perspective of a pessimist". We choose this text to see if ChatGPT will have a negative or positive connotation with the future of A.I. 
+
+* **Describe the methods you will use to analyze the text:**<br>
 Methods we will use are TF-IDF to help find the most common words used and plot graph and sentiment analysis to help determine if the tone of the text is positive or negative.
 
 ## Data
 
+* **Describe the data you are analyzing:** <br>
 We are analyzing the data and see if words that are in the five essays all have a overall negative or positive tone.
-\n
-Importing of data and cleaning/formatting
+
+* **Describe the steps you took to prepare the data for analysis**
+  * **(TF-IDF portion)**<br>
+To make the data into a tfidf. We first imported the neccesarry libraries, after that we imported the data into a variable called df. We then made a variable called corpG using Corpus to get the responses. After we made corpG we then made a code that will clean the data of any words that is unknown, stopwords, numbers, whitespace, or any other words that will break the code. What we did next was made the corpG into a TermDocumentMatrix called tdG, we also used as.matrix(tdG) calling it tdGM. TdGM allows us to find out the frequencies that a words appear in the entire text. TdGM also allows us to to create tfidfV which is used to make the wordcloud, plots, and words that appear commonly in the entire text.
+  * **(sentiment analysis)**<br>
+Like in the TF-IDF portion, the data was cleaned, removing words that are unknown, stopwords, numbers, whitespace, or any other words that will break the code. We used the polarity() function with look ahead and look behind of two words to get the polarity of the texts. Then we set all nan values in the polarity to zero, if there were any.
+
+Importing of data and cleaning/formatting:
 ```{r}
 df <- read_csv("ChatGPT_ResponsesOnAI.csv")
 head(df)
+```
+
+```{r}
+corpG <- Corpus(VectorSource(df$Response))
 ```
 
 ```{r}
@@ -47,24 +60,18 @@ remove_unknown_characters <- function(text) {
 }
 
 # Apply the function to each document in the corpus
-# Function to remove unknown characters
-remove_unknown_characters <- function(text) {
-  encoding <- "UTF-8"
-  clean_text <- iconv(text, to = encoding, sub = "")
-  return(clean_text)
-}
+corpG <- tm_map(corpG, content_transformer(remove_unknown_characters))
+```
 
-# Apply the function to each element in the df$Response column
-df$Response <- sapply(df$Response, remove_unknown_characters)
+```{r, warning = FALSE}
+corpG <- tm_map(corpG,content_transformer(tolower))
+corpG <- tm_map(corpG,removeNumbers)
+corpG <- tm_map(corpG,removeWords,stopwords("english"))
+corpG <- tm_map(corpG,removePunctuation)
+corpG <- tm_map(corpG, stripWhitespace)
 
-# Further text preprocessing on df$Response
-df$Response <- tolower(df$Response)
-df$Response <- gsub("[0-9]", "", df$Response)  # remove numbers
-df$Response <- removeWords(df$Response, stopwords("english"))
-df$Response <- removePunctuation(df$Response)
-df$Response <- stripWhitespace(df$Response)
-df$Response <- removeWords(df$Response, c("ai"))
-df$Response <- stemDocument(df$Response)
+corpG <- tm_map(corpG,removeWords, c("Ai", "AI", "ai"))
+corpG <- tm_map(corpG,stemDocument) #still cutting off words...
 ```
 
 ```{r}
@@ -95,6 +102,13 @@ plot(termG2$freq[termG2$freq > 1], xlab = "Word index", ylab = "Frequency")
 wordcloud(termG2$word[termG2$freq >1], termG2$freq[termG2$freq > 1],scale = c(2,0.5), min.freq = 2, rot.per = .5,colors = cols, random.color = FALSE, ordered.colors = TRUE)
 ```
 
+## TF-IDF
+
+* **Conduct a TF-IDF analysis to identify the most important terms in the text:**
+The ten most important terms in the TF-IDF analysis in decreasing order are: computer, human, just, dance, learn, fear, stage, get, tech, and stuff
+
+* **Discuss how these terms contribute to the overall meaning of the text:**
+These terms help to create a negative meaning in the text such as using words like, fear. These negative terms helps to show bring pull the entire text into a negative meaning against A.I. However their is also terms such that bring out a postitive meaning such as dance and learn. These help to bring the entire text into a positive meaning that supports A.I. Depending how many times the positive and negative terms are used these terms will effect the meaning of the entire text.
 ```{r}
 
 tdGM[1:4,1:6]
@@ -161,7 +175,7 @@ cols <- rainbow(dim(tfidfTr)[[1]])
 parcoord(tfidfTr[,1:10],col = cols)
 ```
 
-# Sentiment Analysis !!!
+## Sentiment Analysis
 
 ```{r}
 
@@ -196,7 +210,7 @@ df$Response <- stemDocument(df$Response)
 ```
 
 
-
+Apply sentiment analysis techniques to the text
 ```{r}
 # Sentiment analysis
 p2 <- polarity(df$Response, group = df$Number,
@@ -215,6 +229,7 @@ print(p2$all$polarity)
 
 ```
 
+Present your findings on the overall sentiment of the text and how it varies throughout the text
 ```{r}
 
 # Extract relevant information for plotting
@@ -262,3 +277,12 @@ wordcloud(words = names(combined_freq), freq = combined_freq,
           scale = c(3, 0.5), min.freq = 1, colors = brewer.pal(8, "RdBu"))
 
 ```
+
+## Dicussion/Conclusion
+* **Discuss any patterns, surprises, or insights gained from the data.**<br>
+Insights/patterns that was gained from the data was that chatGPT had a positive tone on the future of A.I. As shown with the TermDocumentMatrix with the 10 most common word, only one word in the list fear had a negative tone, compared to the two positive word dance and learn. These words show how their is a higher majority of positive words in the text showing ChatGPT positive attitude on the future of A.I.
+
+* **Discuss the limitations of your analysis and how you might improve your analysis in the future.**<br>
+A limitation with our analysis is the essays that are generated by ChatGPT. As we used the same prompt and ChatGPT will generate similar prompt even when told to create something different. This similar prompt generally will make all the text lean toward a negative or positive potentially leading to the sentiment analysis being incorrect. A way to fix this problem is spend more time developing prompts that are similar but will allow ChatGPT to make a unique text for each time it is asked to generate one.
+    
+Overall, the project was a success. We found out the most used words and overall tone/polarity of the texts generated by ChatGPT. Future projects could use more texts to analyse with multiple prompts, as this project only had six texts on one prompt.
