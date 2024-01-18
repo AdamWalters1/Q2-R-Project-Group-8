@@ -10,7 +10,7 @@ Sentiment analysis was conducted on its responses to see if ChatGPT had any tend
 
 ## Introduction:
 * **Describe the text you are analyzing and why you choose it:**
-    * We are analyzing text from chatgpt by giving it the prompt "Write a 300 word essay on the future of A.I." five times. There are some alterations on the prompt to help generate a difference in the essay, for example: "Write... on the future of A.I. in the perspective of a pessimist". We choose this text to see if chatgpt will have a negative or positive connotation with the future of A.I. 
+    * We are analyzing text from chatgpt by giving it the prompt "Write a 300 word essay on the future of A.I." five times. There are some alterations on the prompt to help generate a difference in the essay, for example: "Write... on the future of A.I. *in the perspective of a pessimist*". We choose this text to see if chatgpt will have a negative or positive connotation with the future of A.I. 
 
 * **Describe the methods you will use to analyze the text:**
     * Methods we will use are TF-IDF to help find the most common words used and plot graph and sentiment analysis to help determine if the tone of the text is positive or negative.
